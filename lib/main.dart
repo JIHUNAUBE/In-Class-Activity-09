@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
+import 'folders_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +15,10 @@ Future<void> main() async {
 class FestivalApp extends StatelessWidget {
   final DatabaseHelper helper;
 
-  const FestivalApp({super.key, required this.helper});
+  const FestivalApp({
+    super.key,
+    required this.helper,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +39,10 @@ class FestivalApp extends StatelessWidget {
 class RosterPage extends StatefulWidget {
   final DatabaseHelper helper;
 
-  const RosterPage({super.key, required this.helper});
+  const RosterPage({
+    super.key,
+    required this.helper,
+  });
 
   @override
   State<RosterPage> createState() => _RosterPageState();
@@ -59,6 +66,10 @@ class _RosterPageState extends State<RosterPage> {
   }
 
   Future<void> loadRecords() async {
+    if (!mounted) return;
+
+    setState(() => loading = true);
+
     try {
       final data = await widget.helper.queryAllRows();
 
@@ -100,28 +111,36 @@ class _RosterPageState extends State<RosterPage> {
 
     try {
       if (editingId == null) {
-        await widget.helper.insert({
+        final id = await widget.helper.insert({
           DatabaseHelper.columnName: name,
           DatabaseHelper.columnAge: age,
         });
 
         if (!mounted) return;
-        showMessage('Record added successfully!');
+        showMessage('Record added! ID: $id');
       } else {
-        await widget.helper.update({
+        final affected = await widget.helper.update({
           DatabaseHelper.columnId: editingId,
           DatabaseHelper.columnName: name,
           DatabaseHelper.columnAge: age,
         });
 
         if (!mounted) return;
+
+        if (affected == 0) {
+          showMessage('No matching record was updated.');
+          return;
+        }
+
         showMessage('Record updated successfully!');
       }
 
       cancelEdit();
       await loadRecords();
     } catch (e) {
-      showMessage('Error saving record: $e');
+      if (mounted) {
+        showMessage('Error saving record: $e');
+      }
     } finally {
       if (mounted) {
         setState(() => saving = false);
@@ -132,8 +151,10 @@ class _RosterPageState extends State<RosterPage> {
   void startEdit(Map<String, dynamic> record) {
     setState(() {
       editingId = record[DatabaseHelper.columnId] as int;
+
       nameController.text =
           record[DatabaseHelper.columnName].toString();
+
       ageController.text =
           record[DatabaseHelper.columnAge].toString();
     });
@@ -153,8 +174,8 @@ class _RosterPageState extends State<RosterPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Record'),
-        content: const Text(
-          'Are you sure you want to delete this record?',
+        content: Text(
+          'Are you sure you want to delete record ID $id?',
         ),
         actions: [
           TextButton(
@@ -174,19 +195,40 @@ class _RosterPageState extends State<RosterPage> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await widget.helper.delete(id);
+      final affected = await widget.helper.delete(id);
 
       if (!mounted) return;
+
+      if (affected == 0) {
+        showMessage('Record was not found.');
+        return;
+      }
 
       if (editingId == id) {
         cancelEdit();
       }
 
       await loadRecords();
-      showMessage('Record deleted successfully!');
+
+      if (mounted) {
+        showMessage('Record deleted successfully!');
+      }
     } catch (e) {
-      showMessage('Error deleting record: $e');
+      if (mounted) {
+        showMessage('Error deleting record: $e');
+      }
     }
+  }
+
+  void openFolders() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FoldersPage(
+          helper: widget.helper,
+        ),
+      ),
+    );
   }
 
   @override
@@ -204,6 +246,13 @@ class _RosterPageState extends State<RosterPage> {
             Theme.of(context).colorScheme.primaryContainer,
         title: const Text('Fall Festival Roster'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Card Folders',
+            icon: const Icon(Icons.folder_open),
+            onPressed: openFolders,
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -266,17 +315,14 @@ class _RosterPageState extends State<RosterPage> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed:
-                          saving ? null : saveRecord,
+                      onPressed: saving ? null : saveRecord,
                       icon: Icon(
                         editingId == null
                             ? Icons.add
                             : Icons.save,
                       ),
                       label: Text(
-                        editingId == null
-                            ? 'Add'
-                            : 'Save',
+                        editingId == null ? 'Add' : 'Save',
                       ),
                     ),
                   ),
@@ -284,8 +330,7 @@ class _RosterPageState extends State<RosterPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed:
-                            saving ? null : cancelEdit,
+                        onPressed: saving ? null : cancelEdit,
                         child: const Text('Cancel Edit'),
                       ),
                     ),
@@ -296,9 +341,18 @@ class _RosterPageState extends State<RosterPage> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: loadRecords,
+                  onPressed: loading ? null : loadRecords,
                   icon: const Icon(Icons.refresh),
                   label: const Text('Refresh'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: openFolders,
+                  icon: const Icon(Icons.folder_open),
+                  label: const Text('Open Card Folders'),
                 ),
               ),
               const SizedBox(height: 16),
@@ -362,8 +416,7 @@ class _RosterPageState extends State<RosterPage> {
                                     'ID: $id | Age: $age',
                                   ),
                                   trailing: Row(
-                                    mainAxisSize:
-                                        MainAxisSize.min,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
                                         tooltip: 'Edit',

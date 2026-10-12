@@ -1,382 +1,161 @@
-# In-Class Activity 08 — Local Storage Part 1
+# In-Class Activity 09 — Local Storage Part II
 
-## Student Information
-
-- **Name:** Jihun Kim
-- **Course:** Mobile Application Development
-- **Section:** 2
-- **Pathway:** Undergraduate
+**Student:** Jihun Kim  
+**Course:** Mobile Application Development  
+**Section:** 2  
+**Pathway:** Undergraduate
 
 ## 1. Project Overview
 
-**Fall Festival Roster** is a Flutter application developed to demonstrate persistent local storage using SQLite.
+This project continues my Flutter SQLite application from In-Class Activity 08. In Part I, I created a Fall Festival Roster app that saves guest names and ages. In Part II, I kept the original roster and added a simple card collection feature.
 
-The application allows users to create, view, edit, and delete festival guest records. Each guest has a unique database ID, a name, and an age.
-
-The main objective of this activity was to implement CRUD operations, understand the difference between temporary application state and persistent storage, and test the reliability of local database operations.
-
-### Main Features
-
-- Add new festival guests
-- Display saved guests with their unique IDs
-- Edit existing guest information
-- Cancel editing without saving changes
-- Delete guests using a confirmation dialog
-- Refresh records from SQLite
-- Display the total number of records
-- Validate names and ages
-- Accept ages between 0 and 130
-- Preserve saved records after restarting the application
+Users can create folders, add cards to a folder, edit card information, and delete cards or folders. The data is saved in a local SQLite database, so it can still be available after the app is closed and reopened.
 
 ## 2. Development Environment
 
 - **Framework:** Flutter
-- **Programming Language:** Dart
-- **Database:** SQLite
-- **IDE:** Visual Studio Code
-- **Testing Device:** Android Emulator — Pixel 7 Pro, API 35
-- **Dependencies:** `sqflite`, `path_provider`, `path`
+- **Language:** Dart
+- **Database:** SQLite (`sqflite`)
+- **Editor:** Visual Studio Code
+- **Test device:** Android Emulator, Pixel 7 Pro (API 35)
+- **Packages:** `sqflite`, `path_provider`, and `path`
 
-### Running the Application
+To run the app:
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-### Static Analysis
-
-The following command was used to check the project:
+To check the code:
 
 ```bash
 flutter analyze
 ```
 
-**Result: PASS — No issues found!**
+The final analyzer check showed **No issues found!** I saved the output in `evidence/analysis_output.txt`.
 
-The analysis output is saved in `evidence/analysis_output.txt`.
+## 3. What I Kept from Activity 08
 
-## 3. Database Implementation
+The original Fall Festival Roster is still part of the project. It uses the `my_table` table with the columns `_id`, `name`, and `age`.
 
-The application uses SQLite to store guest information locally.
+The roster supports adding guests, viewing saved records, editing and canceling edits, deleting records with confirmation, refreshing the list, and validating names and ages. Valid ages are from 0 to 130. SQLite uses each guest's ID to identify the correct record, even when two guests have the same name.
 
-**Database name:** `MyDatabase.db`
+In Part I, I tested these features:
 
-**Table name:** `my_table`
-
-### Database Schema
-
-| Column | Type | Description |
-|---|---|---|
-| `_id` | INTEGER PRIMARY KEY | Unique record identifier |
-| `name` | TEXT NOT NULL | Guest name |
-| `age` | INTEGER NOT NULL | Guest age |
-
-Database initialization and CRUD methods are implemented in `lib/database_helper.dart`.
-
-The Flutter user interface and input validation are implemented in `lib/main.dart`.
-
-### CRUD Operations
-
-**Create:** The Add button inserts a new guest into SQLite.
-
-**Read:** The Refresh button retrieves saved records from the database.
-
-**Update:** The Edit and Save buttons update the selected record using its unique ID.
-
-**Delete:** The Delete button opens a confirmation dialog before removing the selected record.
-
-Using unique IDs allows the application to manage records correctly even when multiple guests share the same name.
-
-## 4. Manual Testing Results
-
-### T1 — Empty Roster and Refresh
-
-**Procedure:**
-
-1. Removed all existing guest records.
-2. Pressed Refresh.
-3. Checked the record count and displayed list.
-
-**Observed Results:**
-
-- The record count displayed `Records: 0`.
-- No guest records appeared.
-- The empty roster message was displayed.
-
-**Result: PASS**
-
-**Evidence:** `evidence/T1_empty.png`
-
-### T2 — Duplicate Names and Unique IDs
-
-**Procedure:**
-
-1. Added River, age 21.
-2. Added another River, age 34.
-3. Compared the database IDs.
-
-**Observed Results:**
-
-- Both guests were stored successfully.
-- Each River record had a different ID.
-- Both records appeared independently in the roster.
-
-**Result: PASS**
-
-The two River records are visible in the T4 screenshots with IDs 3 and 4.
-
-This confirms that records are identified by their database IDs rather than their names.
-
-### T3 — Edit, Cancel, and Save
-
-**Procedure:**
-
-1. Added River, age 34.
-2. Selected Edit and changed the age to 99.
-3. Selected Cancel Edit.
-4. Confirmed that the saved age remained 34.
-5. Selected Edit again.
-6. Changed the age to 35.
-7. Selected Save.
-
-**Observed Results:**
-
-- Cancel Edit preserved the original saved age.
-- Save successfully updated River's age from 34 to 35.
-- The database ID remained 1.
-- The total record count remained 1.
-
-**Result: PASS**
-
-**Evidence:** `evidence/T3_save.png`
-
-This test demonstrates that temporary editing changes are not written to SQLite until Save is selected.
-
-### T4 — SQLite Persistence After Restart
-
-**Prediction:**
-
-Before restarting the application, I predicted that the guest records would remain available because SQLite stores data persistently on the device.
-
-**Procedure:**
-
-1. Displayed the saved guest records.
-2. Captured a screenshot before restarting.
-3. Stopped the application.
-4. Reopened the application without clearing its stored data.
-5. Refreshed the roster.
-6. Compared the records before and after restarting.
-
-**Observed Results:**
-
-| ID | Name | Age Before | Age After |
-|---|---|---|---|
-| 3 | River | 34 | 34 |
-| 4 | River | 21 | 21 |
-| 5 | Acorn | 0 | 0 |
-| 6 | Oak | 130 | 130 |
-
-- **Before restart:** 4 records
-- **After restart:** 4 records
-- All guest names, ages, and IDs remained unchanged.
-
-**Result: PASS**
-
-**Evidence:**
-- `evidence/T4_before.png`
-- `evidence/T4_after.png`
-
-**Conclusion:**
-
-The application successfully preserved all four records after restarting. This confirms that guest information is stored in SQLite rather than only in temporary Flutter widget state.
-
-### T5 — Delete Confirmation
-
-**Procedure:**
-
-1. Selected Delete for the River record.
-2. Canceled the deletion.
-3. Verified that the record remained in the roster.
-4. Selected Delete again.
-5. Confirmed the deletion.
-6. Refreshed the roster.
-
-**Observed Results:**
-
-- Canceling deletion preserved the record.
-- Confirming deletion removed River.
-- The record count changed from 1 to 0.
-- The empty roster message appeared.
-
-**Result: PASS**
-
-**Evidence:** `evidence/T5_delete.png`
-
-The confirmation dialog helps prevent accidental record deletion.
-
-### T6 — Input Validation and Boundary Testing
-
-**Objective:**
-
-Verify that the application validates user input and supports the required age range.
-
-### Validation Rules
-
-**Name Validation:**
-- Empty names are rejected.
-- Names containing only whitespace are rejected.
-
-**Age Validation:**
-- Age must be a whole number.
-- Minimum accepted age: 0.
-- Maximum accepted age: 130.
-- Nonnumeric, negative, decimal, and out-of-range values are rejected.
-
-### Test Results
-
-| Input | Expected Result | Observed Result |
-|---|---|---|
-| Acorn, age `abc` | Reject | Rejected |
-| Acorn, age `0` | Accept | Accepted |
-| Oak, age `130` | Accept | Accepted |
-
-**Observed Results:**
-
-- The application displayed an error message for the invalid age `abc`.
-- Acorn with age 0 was successfully saved.
-- Oak with age 130 was successfully saved.
-- Both valid boundary records appeared in the roster.
-
-**Result: PASS**
-
-**Evidence:**
-- `evidence/T6_invalid.png`
-- `evidence/T4_before.png`
-- `evidence/T4_after.png`
-
-The validation logic also checks for empty names, whitespace-only names, decimal ages, negative ages, and ages above 130.
-
-## 5. Testing Summary
-
-| Test | Description | Result |
-|---|---|---|
+| Test | What I checked | Result |
+| --- | --- | --- |
 | T1 | Empty roster and refresh | PASS |
-| T2 | Duplicate names and unique IDs | PASS |
+| T2 | Two guests with the same name have different IDs | PASS |
 | T3 | Edit, cancel, and save | PASS |
-| T4 | Persistent data after restart | PASS |
-| T5 | Delete cancellation and confirmation | PASS |
-| T6 | Input validation and age boundaries | PASS |
-| Static Analysis | Flutter analyzer | PASS |
+| T4 | Data stays after restarting the app | PASS |
+| T5 | Delete confirmation | PASS |
+| T6 | Invalid input and age limits | PASS |
 
-The completed tests demonstrate the core functionality of the Fall Festival Roster application.
+The original screenshots are still included in the `evidence` folder, including `T1_empty.png`, `T3_save.png`, `T4_before.png`, `T4_after.png`, `T5_delete.png`, and `T6_invalid.png`.
 
-## 6. Critical Thinking Questions
+## 4. Database Upgrade in Activity 09
 
-### Question 1 — The Disappearing-Data Mystery
+I updated the SQLite database from **version 1 to version 2**. Instead of deleting the old database, the app uses an upgrade method to create the new tables while keeping the original `my_table` data.
 
-**What did you predict would happen after restarting the application? What actually happened?**
+Before the upgrade, I saved a screenshot showing three roster records: Alice (22), Bob (25), and Charlie (30). After the upgrade, those records were still present with the same IDs and information.
 
-Before restarting the application, I predicted that the saved guest records would remain available because SQLite stores data persistently on the device.
+**Evidence:** `evidence/T1_before.png` and `evidence/T1_after.png` (the before screenshot may be inside a nested evidence folder in my working project).
 
-After restarting the application, all four guest records were still present. Their IDs, names, ages, and the total record count remained unchanged.
+### Database tables
 
-This confirmed my prediction.
+**`my_table` — Original roster**
 
-SQLite data is different from temporary Flutter widget state. Widget state may be lost when an application closes, but data stored in SQLite can be retrieved again when the application starts.
+| Column | Purpose |
+| --- | --- |
+| `_id` | Unique guest ID |
+| `name` | Guest name |
+| `age` | Guest age |
 
-The T4 screenshots demonstrate that the application successfully retrieved the previously saved records.
+**`folders` — Card folders**
 
-### Question 2 — Two Rivers, One Wrong Edit
+| Column | Purpose |
+| --- | --- |
+| `id` | Unique folder ID |
+| `name` | Folder name (must be unique) |
+| `created_at` | Date and time the folder was created |
 
-**Why are unique IDs important when two guests have the same name?**
+**`cards` — Cards saved inside folders**
 
-Two guests can have identical names, so names should not be used as unique identifiers for database operations.
+| Column | Purpose |
+| --- | --- |
+| `id` | Unique card ID |
+| `title` | Card title |
+| `suit` | Card suit |
+| `notes` | Optional notes |
+| `image_ref` | Optional image reference |
+| `folder_id` | ID of the folder containing the card |
 
-In this application, two guests named River were stored with different IDs.
+The `folder_id` column is a foreign key connected to `folders.id`. The database also has an index on `cards.folder_id` to help find cards in a folder.
 
-When a user selects Edit, the application uses the selected record's unique ID to identify which database row should be updated.
+## 5. New Folder and Card Features
 
-This prevents the application from accidentally updating the wrong guest.
+### Folder features
 
-The Cancel Edit feature also shows the difference between temporary form state and saved database information. Canceling an edit does not modify the stored record.
+The **Card Folders** screen shows the saved folders and the number of cards in each one. I can add a new folder using the **+** button, open a folder to see its cards, refresh the list, or delete a folder after a confirmation message.
 
-Using unique primary keys makes database operations more reliable and accurate.
+The folder name cannot be empty, and SQLite prevents duplicate folder names.
 
-### Question 3 — Usability Walkthrough
+### Card features
 
-**How does the interface help users manage data, and what could be improved?**
+Inside a folder, I can add a card with a title, suit, and notes. I can also edit an existing card or delete it. The card list updates after changes are saved.
 
-The application provides a simple interface for managing festival guests.
+During development, I had a Flutter red-screen error when saving or editing cards. I checked the code and tested the card screen again. After fixing the issue, I was able to save and edit cards normally.
 
-Users can add guests using the name and age fields, view saved records, edit existing information, and delete records.
+## 6. Foreign Keys and Cascade Delete
 
-The Refresh button retrieves the latest data from SQLite, while the record count shows how many guests are currently stored.
+I enabled SQLite foreign key support using `PRAGMA foreign_keys = ON`.
 
-The Edit and Cancel Edit buttons allow users to make changes without accidentally saving unwanted information.
+The `cards` table uses this relationship:
 
-The Delete confirmation dialog helps prevent accidental deletion.
+```sql
+FOREIGN KEY (folder_id)
+  REFERENCES folders(id)
+  ON DELETE CASCADE
+```
 
-Input validation prevents invalid guest information from being saved.
+This means deleting a folder also deletes the cards inside that folder. It helps prevent cards from being left in the database without a valid folder.
 
-One possible improvement would be to display more specific error messages for different invalid inputs. Another improvement would be to add search and sorting functionality for larger guest lists.
+I tested this by deleting a folder that contained a card. After the deletion, the folder was gone, and the card was no longer in the database. I also checked the database using SQLite commands. The foreign key information showed `ON DELETE CASCADE`.
 
-Overall, the interface provides the essential features needed for a simple local database application.
+**Evidence:** `evidence/cascade_before.png` and `evidence/cascade_after.png`.
 
-## 7. Evidence Files
+## 7. Testing and Evidence
 
-The `evidence` folder contains the screenshots and analysis results collected during testing.
+I tested the new features in the Android emulator and checked the database where needed.
 
-| File | Description |
-|---|---|
-| `T1_empty.png` | Empty roster and zero record count |
-| `T3_save.png` | Successful update of River's age |
-| `T4_before.png` | Guest records before restarting |
-| `T4_after.png` | Guest records after restarting |
-| `T5_delete.png` | Empty roster after confirmed deletion |
-| `T6_invalid.png` | Invalid age validation message |
-| `analysis_output.txt` | Flutter static analysis output |
+| Test | What I checked | Result / Evidence |
+| --- | --- | --- |
+| Database migration | Existing roster data remains after upgrading to version 2 | PASS — `T1_before.png`, `T1_after.png` |
+| Folder creation | A new folder can be saved and opened | PASS — tested in emulator |
+| Card creation and editing | A card can be added and its notes can be changed | PASS — tested in emulator |
+| Card deletion | Deleting a card removes it from the list | PASS — `card_before_delete.png`, `card_after_delete.png` |
+| Cascade delete | Deleting a folder removes its cards | PASS — `cascade_before.png`, `cascade_after.png` |
+| Static analysis | `flutter analyze` | PASS — `analysis_output.txt` |
 
-## 8. Challenges and Lessons Learned
+I also used SQLite to inspect the `folders` and `cards` tables and check the foreign key relationship. The foreign key query confirmed that `cards.folder_id` refers to `folders.id` with cascade deletion.
 
-One challenge was implementing input validation correctly.
+## 8. Problems and What I Learned
 
-The age validation logic was updated to accept the required range from 0 through 130 while rejecting unsupported values.
+One problem I had was a red Flutter error screen when saving a new card or editing an existing one. The folder screen worked, but the card form caused an error. I reviewed the card page, made changes, and tested it again until the save and edit actions worked.
 
-Testing confirmed that both boundary ages could be saved successfully.
+I also learned that changing a database schema is different from creating a new database. A migration is important because it lets an app add features without losing information that users already saved.
 
-Another important lesson was understanding the difference between temporary application state and persistent database storage.
-
-The restart test showed that SQLite can preserve records after the application is closed and reopened.
-
-I also learned why database operations should use unique primary keys rather than guest names.
-
-This activity provided practical experience with Flutter interfaces, asynchronous database operations, CRUD functionality, and local data persistence.
+The cascade delete test helped me understand foreign keys. A card belongs to a folder, so removing the folder should also remove its cards. Testing the database directly helped me confirm that this relationship worked.
 
 ## 9. AI Assistance Disclosure
 
-ChatGPT was used as a learning and development assistant during this activity.
+I used ChatGPT as a learning and coding assistant during this activity. It helped me understand the assignment, plan the SQLite upgrade, write and review parts of the Flutter code, troubleshoot the card form error, and organize the testing steps and README.
 
-AI assistance included:
-
-- Explaining Flutter and SQLite concepts
-- Interpreting assignment requirements
-- Helping implement and troubleshoot the user interface
-- Improving input validation logic
-- Explaining CRUD operations and persistent storage
-- Guiding manual testing procedures
-- Organizing and proofreading the README documentation
-
-The database helper starter code was provided by the instructor.
-
-Application execution, manual testing, and screenshots were performed by the student.
+I ran the application, checked the results in the Android emulator, used SQLite commands, and captured the evidence screenshots. The original database helper starter code was provided by the instructor.
 
 ## 10. Conclusion
 
-The Fall Festival Roster application demonstrates how Flutter can use SQLite for persistent local data storage.
+In this activity, I extended my existing Flutter app without removing the original roster feature. I added folders and cards, upgraded the SQLite database to version 2, and tested the foreign key relationship and cascade delete behavior.
 
-The application supports creating, reading, updating, and deleting guest records. It also demonstrates unique record identification, input validation, edit cancellation, delete confirmation, and data persistence after restarting.
-
-The manual tests confirmed the core CRUD functionality, and Flutter static analysis completed without issues.
-
-This activity improved my understanding of how local databases work in Flutter applications and why persistent storage is important for managing structured data.
+This project helped me better understand database migrations, relationships between tables, and why testing saved data is important in mobile applications.
