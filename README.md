@@ -159,3 +159,25 @@ I ran the application, checked the results in the Android emulator, used SQLite 
 In this activity, I extended my existing Flutter app without removing the original roster feature. I added folders and cards, upgraded the SQLite database to version 2, and tested the foreign key relationship and cascade delete behavior.
 
 This project helped me better understand database migrations, relationships between tables, and why testing saved data is important in mobile applications.
+
+## 11. Release APK Smoke Test
+
+I built the release APK using:
+
+flutter build apk --release
+
+The build completed successfully. I installed the APK on my Android
+emulator (Pixel 7 Pro, API 35) and tested the application.
+
+| Test | Observed Result | Status |
+| --- | --- | --- |
+| App launch | The app opened without errors. | PASS |
+| Folder creation | I created and opened a new folder. | PASS |
+| Card creation | I added and saved a new card. | PASS |
+| Card editing | I edited an existing card and saved the changes. | PASS |
+| Card deletion | The confirmation dialog appeared and the card was deleted. | PASS |
+| Folder cascade delete | Deleting a folder also removed its cards. | PASS |
+| Data persistence | Saved data remained after closing and reopening the app. | PASS |
+
+The release APK was tested successfully.
+The APK submitted to iCollege is named Activity09_Kim_Jihun.apk.
